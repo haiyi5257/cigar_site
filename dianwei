@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宁波地铁1号线站点地图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 20px;
+            color: #e0e0ff;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .info-panel {
+            background: rgba(25, 35, 80, 0.85);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .info-panel h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-panel h2 i {
+            font-size: 1.5rem;
+        }
+
+        .line-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-card {
+            background: rgba(40, 50, 100, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #4fc3f7;
+        }
+
+        .info-card h3 {
+            color: #81d4fa;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .stations-container {
+            margin-top: 15px;
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .station-card {
+            background: rgba(50, 65, 120, 0.8);
+            border-radius: 8px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .station-card:hover {
+            background: rgba(70, 100, 180, 0.9);
+            transform: translateY(-3px);
+        }
+
+        .station-icon {
+            width: 8px;
+            height: 8px;
+            background: #4fc3f7;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .station-icon::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #4fc3f7;
+            border-radius: 50%;
+            left: -8px;
+            top: -8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.7; }
+            70% { transform: scale(1.3); opacity: 0; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        .station-name {
+            font-weight: 500;
+        }
+
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            color: #a0a0d0;
+            font-size: 0.9rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(40, 50, 100, 0.85);
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .color-box {
+            width: 20px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        .metro-line {
+            background: #4fc3f7;
+        }
+
+        .station-marker {
+            background: #ff5252;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .line-info {
+                grid-template-columns: 1fr;
+            }
+
+            .map-container {
+                height: 400px;
+            }
+
+            .stations-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>宁波地铁1号线</h1>
+        <p class="subtitle">宁波地铁1号线是宁波市首条开通运营的地铁线路，全长约46公里，共设29座车站，连接了宁波市中心城区与北仑区，是城市公共交通的骨干线路。</p>
+    </header>
+
+    <div class="container">
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="color-box metro-line"></div>
+                    <span>地铁1号线</span>
+                </div>
+                <div class="legend-item">
+                    <div class="color-box station-marker"></div>
+                    <span>地铁站点</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h2><i class="fas fa-subway"></i> 线路信息</h2>
+            <div class="line-info">
+                <div class="info-card">
+                    <h3>基本信息</h3>
+                    <p><strong>开通日期：</strong> 2014年5月30日</p>
+                    <p><strong>线路长度：</strong> 46.17公里</p>
+                    <p><strong>车站数量：</strong> 29座</p>
+                    <p><strong>运行时间：</strong> 高桥西站 ↔ 霞浦站</p>
+                </div>
+
+                <div class="info-card">
+                    <h3>运营时间</h3>
+                    <p><strong>首班车：</strong> 06:00 (高桥西站/霞浦站)</p>
+                    <p><strong>末班车：</strong> 22:00 (高桥西站/霞浦站)</p>
+                    <p><strong>高峰间隔：</strong> 约5分钟</p>
+                    <p><strong>平峰间隔：</strong> 约7-8分钟</p>
+                </div>
+
+                <div class="info-card">
+                    <h3>特色服务</h3>
+                    <p>无障碍电梯、免费WiFi、AED设备</p>
+                    <p>手机支付购票、NFC乘车</p>
+                    <p>与公交、共享单车接驳服务</p>
+                    <p>首末班车时刻表查询服务</p>
+                </div>
+            </div>
+
+            <div class="stations-container">
+                <h3>站点列表 (共29个站点)</h3>
+                <div class="stations-grid">
+                    <div class="station-card" data-station="高桥西站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">高桥西站</span>
+                    </div>
+                    <div class="station-card" data-station="高桥站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">高桥站</span>
+                    </div>
+                    <div class="station-card" data-station="梁祝站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">梁祝站</span>
+                    </div>
+                    <div class="station-card" data-station="芦港站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">芦港站</span>
+                    </div>
+                    <div class="station-card" data-station="徐家漕长乐站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">徐家漕长乐站</span>
+                    </div>
+                    <div class="station-card" data-station="望春桥站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">望春桥站</span>
+                    </div>
+                    <div class="station-card" data-station="泽民站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">泽民站</span>
+                    </div>
+                    <div class="station-card" data-station="大卿桥站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">大卿桥站</span>
+                    </div>
+                    <div class="station-card" data-station="西门口站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">西门口站</span>
+                    </div>
+                    <div class="station-card" data-station="鼓楼站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">鼓楼站</span>
+                    </div>
+                    <div class="station-card" data-station="东门口站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">东门口站</span>
+                    </div>
+                    <div class="station-card" data-station="江厦桥东站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">江厦桥东站</span>
+                    </div>
+                    <div class="station-card" data-station="舟孟北路站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">舟孟北路站</span>
+                    </div>
+                    <div class="station-card" data-station="樱花公园站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">樱花公园站</span>
+                    </div>
+                    <div class="station-card" data-station="福明路站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">福明路站</span>
+                    </div>
+                    <div class="station-card" data-station="世纪大道站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">世纪大道站</span>
+                    </div>
+                    <div class="station-card" data-station="海晏北路站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">海晏北路站</span>
+                    </div>
+                    <div class="station-card" data-station="福庆北路站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">福庆北路站</span>
+                    </div>
+                    <div class="station-card" data-station="盛莫路站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">盛莫路站</span>
+                    </div>
+                    <div class="station-card" data-station="东环南路站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">东环南路站</span>
+                    </div>
+                    <div class="station-card" data-station="邱隘东站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">邱隘东站</span>
+                    </div>
+                    <div class="station-card" data-station="五乡站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">五乡站</span>
+                    </div>
+                    <div class="station-card" data-station="宝幢站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">宝幢站</span>
+                    </div>
+                    <div class="station-card" data-station="邬隘站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">邬隘站</span>
+                    </div>
+                    <div class="station-card" data-station="大碶站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">大碶站</span>
+                    </div>
+                    <div class="station-card" data-station="松花江路站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">松花江路站</span>
+                    </div>
+                    <div class="station-card" data-station="中河路站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">中河路站</span>
+                    </div>
+                    <div class="station-card" data-station="长江路站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">长江路站</span>
+                    </div>
+                    <div class="station-card" data-station="霞浦站">
+                        <div class="station-icon"></div>
+                        <span class="station-name">霞浦站</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>数据来源：宁波轨道交通集团 | 地图数据：百度地图API | 设计制作：宁波地铁出行助手</p>
+        <p>© 2023 宁波地铁1号线站点地图 - 本页面仅作展示用途</p>
+    </footer>
+
+    <script>
+        // 百度地图API功能
+        function initMap() {
+            // 创建地图实例
+            var map = new BMap.Map("map");
+
+            // 初始化地图，设置中心点坐标和地图级别（宁波市中心）
+            var centerPoint = new BMap.Point(121.549792, 29.868388);
+            map.centerAndZoom(centerPoint, 13);
+
+            // 启用滚轮缩放
+            map.enableScrollWheelZoom(true);
+
+            // 添加地图类型控件
+            map.addControl(new BMap.MapTypeControl());
+
+            // 添加比例尺控件
+            map.addControl(new BMap.ScaleControl());
+
+            // 添加导航控件
+            map.addControl(new BMap.NavigationControl());
+
+            // 定义地铁1号线站点坐标（实际坐标需替换）
+            var stations = [
+                {name: "高桥西站", point: new BMap.Point(121.459, 29.915)},
+                {name: "高桥站", point: new BMap.Point(121.476, 29.907)},
+                {name: "梁祝站", point: new BMap.Point(121.492, 29.900)},
+                {name: "芦港站", point: new BMap.Point(121.504, 29.892)},
+                {name: "徐家漕长乐站", point: new BMap.Point(121.515, 29.885)},
+                {name: "望春桥站", point: new BMap.Point(121.525, 29.878)},
+                {name: "泽民站", point: new BMap.Point(121.535, 29.871)},
+                {name: "大卿桥站", point: new BMap.Point(121.540, 29.868)},
+                {name: "西门口站", point: new BMap.Point(121.545, 29.865)},
+                {name: "鼓楼站", point: new BMap.Point(121.550, 29.876)},
+                {name: "东门口站", point: new BMap.Point(121.556, 29.872)},
+                {name: "江厦桥东站", point: new BMap.Point(121.565, 29.870)},
+                {name: "舟孟北路站", point: new BMap.Point(121.575, 29.868)},
+                {name: "樱花公园站", point: new BMap.Point(121.585, 29.865)},
+                {name: "福明路站", point: new BMap.Point(121.595, 29.863)},
+                {name: "世纪大道站", point: new BMap.Point(121.605, 29.860)},
+                {name: "海晏北路站", point: new BMap.Point(121.615, 29.857)},
+                {name: "福庆北路站", point: new BMap.Point(121.625, 29.854)},
+                {name: "盛莫路站", point: new BMap.Point(121.635, 29.851)},
+                {name: "东环南路站", point: new BMap.Point(121.645, 29.848)},
+                {name: "邱隘东站", point: new BMap.Point(121.655, 29.845)},
+                {name: "五乡站", point: new BMap.Point(121.665, 29.840)},
+                {name: "宝幢站", point: new BMap.Point(121.675, 29.835)},
+                {name: "邬隘站", point: new BMap.Point(121.685, 29.830)},
+                {name: "大碶站", point: new BMap.Point(121.695, 29.825)},
+                {name: "松花江路站", point: new BMap.Point(121.705, 29.820)},
+                {name: "中河路站", point: new BMap.Point(121.715, 29.815)},
+                {name: "长江路站", point: new BMap.Point(121.725, 29.810)},
+                {name: "霞浦站", point: new BMap.Point(121.735, 29.805)}
+            ];
+
+            // 创建地铁线路路径点
+            var pathPoints = stations.map(station => station.point);
+
+            // 绘制地铁线路
+            var polyline = new BMap.Polyline(pathPoints, {
+                strokeColor: "#4fc3f7",
+                strokeWeight: 6,
+                strokeOpacity: 0.8
+            });
+            map.addOverlay(polyline);
+
+            // 添加站点标记
+            stations.forEach(station => {
+                var marker = new BMap.Marker(station.point);
+                map.addOverlay(marker);
+
+                // 添加站点标签
+                var label = new BMap.Label(station.name, {
+                    position: station.point,
+                    offset: new BMap.Size(20, -10)
+                });
+                label.setStyle({
+                    color: "#fff",
+                    backgroundColor: "#ff5252",
+                    padding: "5px 10px",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "14px",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.3)"
+                });
+                map.addOverlay(label);
+
+                // 添加点击事件
+                marker.addEventListener("click", function() {
+                    map.panTo(station.point);
+                    alert("您选择了站点: " + station.name);
+                });
+            });
+
+            // 添加站点卡片点击事件
+            document.querySelectorAll('.station-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const stationName = this.getAttribute('data-station');
+                    const station = stations.find(s => s.name === stationName);
+
+                    if (station) {
+                        map.panTo(station.point);
+                        map.setZoom(16);
+
+                        // 高亮显示选中的站点
+                        map.getOverlays().forEach(overlay => {
+                            if (overlay instanceof BMap.Label && overlay.getContent() === stationName) {
+                                overlay.setStyle({
+                                    backgroundColor: "#ff8a80",
+                                    fontWeight: "bold"
+                                });
+                                setTimeout(() => {
+                                    overlay.setStyle({
+                                        backgroundColor: "#ff5252",
+                                        fontWeight: "normal"
+                                    });
+                                }, 2000);
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        // 页面加载完成后初始化地图
+        window.onload = initMap;
+    </script>
+
+    <!-- 引入百度地图API（实际使用时需要替换为你的百度地图密钥） -->
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=nSxiPohfziUaCuONe4ViUP2N"></script>
+
+    <!-- Font Awesome 图标库 -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>
